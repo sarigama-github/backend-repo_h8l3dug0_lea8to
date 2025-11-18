@@ -1,48 +1,44 @@
 """
-Database Schemas
+Database Schemas for Discover Portugal
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
+Each Pydantic model represents a collection in MongoDB. The collection name is
+the lowercase of the class name.
 
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+- Event -> "event"
+- Rsvp -> "rsvp"
+- User -> "user"
 """
+from pydantic import BaseModel, Field, EmailStr, HttpUrl
+from typing import Optional, List
+from datetime import datetime
 
-from pydantic import BaseModel, Field
-from typing import Optional
+class Location(BaseModel):
+    name: Optional[str] = Field(None, description="Venue or place name")
+    address: Optional[str] = Field(None, description="Street address")
+    city: Optional[str] = Field(None, description="City name")
+    lat: float = Field(..., description="Latitude")
+    lng: float = Field(..., description="Longitude")
 
-# Example schemas (replace with your own):
+class Event(BaseModel):
+    title: str = Field(..., description="Event title")
+    description: Optional[str] = Field(None, description="Event description")
+    category: str = Field(..., description="Event category (Culture, Outdoors, Food, etc.)")
+    start_time: datetime = Field(..., description="Start date/time in ISO format")
+    end_time: Optional[datetime] = Field(None, description="End date/time in ISO format")
+    location: Location = Field(..., description="Location info including coordinates")
+    image_url: Optional[HttpUrl] = Field(None, description="Cover image URL")
+    organizer_name: str = Field(..., description="Organizer display name")
+    organizer_email: EmailStr = Field(..., description="Organizer contact email")
+
+class Rsvp(BaseModel):
+    event_id: str = Field(..., description="Referenced event _id as string")
+    user_name: str = Field(..., description="Attendee name")
+    user_email: EmailStr = Field(..., description="Attendee email")
+    status: str = Field("going", description="RSVP status: going, interested, cancelled")
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
-
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    name: str
+    email: EmailStr
+    bio: Optional[str] = None
+    interests: Optional[List[str]] = None
+    is_active: bool = True
